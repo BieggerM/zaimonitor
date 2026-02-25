@@ -22,8 +22,6 @@ export default function Home() {
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-5 py-7 md:px-10 md:py-10">
       <OverviewHeader
         latestDocumentTimestamp={latestDocumentTimestamp}
-        hours={hours}
-        onHoursChange={setHours}
       />
 
       {error ? (
@@ -60,6 +58,8 @@ export default function Home() {
           failureByModel={data?.failure_by_model ?? {}}
           windowStart={trendWindowStart}
           windowEnd={trendWindowEnd}
+          hours={hours}
+          onHoursChange={setHours}
         />
 
         <OverviewKpisSecondary

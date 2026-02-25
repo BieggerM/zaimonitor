@@ -19,6 +19,8 @@ type OverviewTrendProps = {
   failureByModel: FailureByModel;
   windowStart: string | null;
   windowEnd: string | null;
+  hours: string;
+  onHoursChange: (value: string) => void;
 };
 
 type SeriesKey = "glm47" | "glm47flash" | "glm5";
@@ -28,6 +30,10 @@ const METRIC_OPTIONS: { key: TrendMetricKey; label: string }[] = [
   { key: "output_tps", label: "Tokens/sec" },
   { key: "ttft_ms", label: "Time to First Token" },
 ];
+const WINDOW_OPTIONS = [
+  { value: "24", label: "24h" },
+  { value: "168", label: "7d" },
+] as const;
 
 function formatMetricValue(metric: TrendMetricKey, value: number | null): string {
   if (value == null || !Number.isFinite(value)) return "-";
@@ -89,7 +95,14 @@ function FailureX({ cx, cy, size = 8 }: { cx?: number; cy?: number; size?: numbe
   );
 }
 
-export function OverviewTrend({ trendByModel, failureByModel, windowStart, windowEnd }: OverviewTrendProps) {
+export function OverviewTrend({
+  trendByModel,
+  failureByModel,
+  windowStart,
+  windowEnd,
+  hours,
+  onHoursChange,
+}: OverviewTrendProps) {
   const [metric, setMetric] = useState<TrendMetricKey>("output_tps");
   const [activeSeries, setActiveSeries] = useState<Set<SeriesKey>>(new Set(ALL_SERIES_KEYS));
   const isMobile = useIsMobile();
@@ -227,8 +240,27 @@ export function OverviewTrend({ trendByModel, failureByModel, windowStart, windo
 
   return (
     <article className="paper-panel paper-noise fade-up rounded-3xl p-5 md:p-7">
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-2xl text-[color:var(--card-foreground)]">Historical Trends</h2>
+        <div className="inline-flex items-center rounded-xl border border-[color:var(--border)] bg-[color:var(--paper)]/72 p-1 shadow-[0_10px_16px_-14px_rgba(20,25,28,0.5)]">
+          {WINDOW_OPTIONS.map((option) => {
+            const selected = option.value === hours;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onHoursChange(option.value)}
+                className={`inline-flex h-8 flex-1 items-center justify-center rounded-lg px-3 text-xs font-semibold transition ${
+                  selected
+                    ? "bg-[color:var(--accent-gold)]/78 text-[color:var(--card-foreground)]"
+                    : "text-[color:var(--muted-foreground)] hover:bg-[color:var(--accent-sky)]/24"
+                }`}
+              >
+                {option.label.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
