@@ -3,8 +3,8 @@ import { queryOverview } from "@/lib/overview-query";
 
 export const runtime = "nodejs";
 
-const CACHE_EDGE_TTL_SECONDS = 60;
-const CACHE_STALE_TTL_SECONDS = 120;
+const CACHE_EDGE_TTL_SECONDS = 30;
+const CACHE_STALE_TTL_SECONDS = 40;
 
 function parseHours(raw: string | null): number {
   if (!raw) return 24;
