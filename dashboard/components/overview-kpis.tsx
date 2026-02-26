@@ -94,8 +94,11 @@ function KpiModelLayout({ formatValue, formatDegraded, unit, variant }: KpiModel
               className={`rounded-xl border px-3 py-2.5 ${critical ? "border-[color:var(--destructive)] bg-[color:var(--destructive)]/10" : "border-[color:var(--border)] bg-[color:var(--paper)]/60"}`}
             >
               <div className="flex items-end justify-between gap-3">
-                <div className="flex items-center gap-1.5">
-                  <p className="font-display text-[11px] font-semibold tracking-wide text-[color:var(--muted-foreground)]">
+                <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5">
+                  <p
+                    className="truncate font-display text-[11px] font-semibold tracking-wide text-[color:var(--muted-foreground)]"
+                    title={MODEL_LABELS[model]}
+                  >
                     {MODEL_LABELS[model]}
                   </p>
                   {critical && (
@@ -152,8 +155,11 @@ function KpiModelLayout({ formatValue, formatDegraded, unit, variant }: KpiModel
               className={`rounded-2xl border p-3 ${critical ? "border-[color:var(--destructive)] bg-[color:var(--destructive)]/10" : "border-[color:var(--border)] bg-[color:var(--paper)]/62"}`}
             >
               <div className="flex items-end justify-between gap-4">
-                <div className="flex items-center gap-1.5">
-                  <p className="font-display text-xs font-semibold tracking-wide text-[color:var(--muted-foreground)]">
+                <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5">
+                  <p
+                    className="truncate font-display text-xs font-semibold tracking-wide text-[color:var(--muted-foreground)]"
+                    title={MODEL_LABELS[model]}
+                  >
                     {MODEL_LABELS[model]}
                   </p>
                   {critical && (
