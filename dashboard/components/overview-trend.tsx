@@ -3,7 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceDot, XAxis, YAxis } from "recharts";
 import type { FailureByModel, TrendByModel, TrendPoint } from "@/lib/overview-types";
-import { ALL_MODELS, MODEL_COLORS, MODEL_LABELS, type ModelKey } from "@/lib/constants";
+import {
+  ALL_MODELS,
+  MODEL_COLORS,
+  MODEL_LABELS,
+  SEVEN_DAYS_MS,
+  SEVEN_DAY_SMOOTHING_RADIUS,
+  TREND_METRIC_OPTIONS,
+  TREND_SERIES_BY_MODEL,
+  TREND_SERIES_KEYS,
+  TREND_WINDOW_OPTIONS,
+  type ModelKey,
+  type TrendMetricKey,
+  type TrendSeriesKey,
+} from "@/lib/constants";
 import { parseIso, formatUtcTime, formatUtcDate } from "@/lib/overview-format";
 import {
   ChartContainer,
@@ -11,8 +24,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-
-type TrendMetricKey = "output_tps" | "ttft_ms";
 
 type OverviewTrendProps = {
   trendByModel: TrendByModel;
@@ -23,17 +34,7 @@ type OverviewTrendProps = {
   onHoursChange: (value: string) => void;
 };
 
-type SeriesKey = "glm47" | "glm47flash" | "glm5";
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-const METRIC_OPTIONS: { key: TrendMetricKey; label: string }[] = [
-  { key: "output_tps", label: "Tokens/sec" },
-  { key: "ttft_ms", label: "Time to First Token" },
-];
-const WINDOW_OPTIONS = [
-  { value: "24", label: "24h" },
-  { value: "168", label: "7d" },
-] as const;
+type SeriesKey = TrendSeriesKey;
 
 function formatMetricValue(metric: TrendMetricKey, value: number | null): string {
   if (value == null || !Number.isFinite(value)) return "-";
@@ -45,12 +46,8 @@ type ChartDataPoint = {
   timestamp: string;
 } & Record<SeriesKey, number | null>;
 
-const ALL_SERIES_KEYS: SeriesKey[] = ["glm47", "glm47flash", "glm5"];
-
 function getSeriesKey(model: ModelKey): SeriesKey {
-  if (model === "glm-4.7") return "glm47";
-  if (model === "glm-4.7-flash") return "glm47flash";
-  return "glm5";
+  return TREND_SERIES_BY_MODEL[model];
 }
 
 function useIsMobile() {
@@ -95,6 +92,38 @@ function FailureX({ cx, cy, size = 8 }: { cx?: number; cy?: number; size?: numbe
   );
 }
 
+function smoothSeries(data: ChartDataPoint[], radius: number): ChartDataPoint[] {
+  if (radius <= 0 || data.length === 0) return data;
+
+  return data.map((row, index) => {
+    const smoothedRow: ChartDataPoint = { ...row };
+
+    for (const seriesKey of TREND_SERIES_KEYS) {
+      if (row[seriesKey] === null) {
+        smoothedRow[seriesKey] = null;
+        continue;
+      }
+
+      let sum = 0;
+      let count = 0;
+      const start = Math.max(0, index - radius);
+      const end = Math.min(data.length - 1, index + radius);
+
+      for (let cursor = start; cursor <= end; cursor += 1) {
+        const value = data[cursor][seriesKey];
+        if (typeof value === "number" && Number.isFinite(value)) {
+          sum += value;
+          count += 1;
+        }
+      }
+
+      smoothedRow[seriesKey] = count > 0 ? sum / count : null;
+    }
+
+    return smoothedRow;
+  });
+}
+
 export function OverviewTrend({
   trendByModel,
   failureByModel,
@@ -103,8 +132,8 @@ export function OverviewTrend({
   hours,
   onHoursChange,
 }: OverviewTrendProps) {
-  const [metric, setMetric] = useState<TrendMetricKey>("output_tps");
-  const [activeSeries, setActiveSeries] = useState<Set<SeriesKey>>(new Set(ALL_SERIES_KEYS));
+  const [metric, setMetric] = useState<TrendMetricKey>(TREND_METRIC_OPTIONS[0].key);
+  const [activeSeries, setActiveSeries] = useState<Set<SeriesKey>>(new Set(TREND_SERIES_KEYS));
   const isMobile = useIsMobile();
 
   const { chartData, chartConfig, hasData, seriesStats, failureMarkers, isSevenDayWindow, dayTickTimestamps } = useMemo(() => {
@@ -153,14 +182,18 @@ export function OverviewTrend({
       return point as ChartDataPoint;
     });
 
+    const lineData = isSevenDayWindow ? smoothSeries(data, SEVEN_DAY_SMOOTHING_RADIUS) : data;
+
     const config: ChartConfig = {};
     const stats: Record<SeriesKey, { min: number | null; max: number | null; avg: number | null }> = {
       glm47: { min: null, max: null, avg: null },
       glm47flash: { min: null, max: null, avg: null },
       glm5: { min: null, max: null, avg: null },
     };
-    const rowsByTimestamp = new Map<string, ChartDataPoint>();
-    for (const row of data) rowsByTimestamp.set(row.timestamp, row);
+    const rawRowsByTimestamp = new Map<string, ChartDataPoint>();
+    for (const row of data) rawRowsByTimestamp.set(row.timestamp, row);
+    const lineRowsByTimestamp = new Map<string, ChartDataPoint>();
+    for (const row of lineData) lineRowsByTimestamp.set(row.timestamp, row);
     const markers: Array<{ key: string; timestamp: string; model: ModelKey; value: number }> = [];
 
     for (const model of ALL_MODELS) {
@@ -181,10 +214,15 @@ export function OverviewTrend({
 
       const failures = failureByModel[model] || [];
       for (const failure of failures) {
-        const row = rowsByTimestamp.get(failure.timestamp);
-        if (!row) continue;
-        const markerValue = row[seriesKey];
-        if (typeof markerValue !== "number" || !Number.isFinite(markerValue)) continue;
+        const rawRow = rawRowsByTimestamp.get(failure.timestamp);
+        if (!rawRow) continue;
+
+        const rawValue = rawRow[seriesKey];
+        if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) continue;
+
+        const smoothedValue = lineRowsByTimestamp.get(failure.timestamp)?.[seriesKey];
+        const markerValue =
+          typeof smoothedValue === "number" && Number.isFinite(smoothedValue) ? smoothedValue : rawValue;
 
         markers.push({
           key: `${model}:${failure.timestamp}`,
@@ -204,7 +242,7 @@ export function OverviewTrend({
     const hasAnyFailures = markers.length > 0;
     const hasAnyData = hasAnyMetricData || hasAnyFailures;
     const dayTickTimestamps = isSevenDayWindow
-      ? data
+      ? lineData
           .map((row) => row.timestamp)
           .filter((timestamp) => {
             const date = new Date(timestamp);
@@ -214,7 +252,7 @@ export function OverviewTrend({
 
     markers.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     return {
-      chartData: data,
+      chartData: lineData,
       chartConfig: config,
       hasData: hasAnyData,
       seriesStats: stats,
@@ -223,7 +261,6 @@ export function OverviewTrend({
       dayTickTimestamps,
     };
   }, [failureByModel, metric, trendByModel, windowEnd, windowStart]);
-
   const toggleSeries = (seriesKey: SeriesKey) => {
     setActiveSeries((prev) => {
       const next = new Set(prev);
@@ -236,14 +273,14 @@ export function OverviewTrend({
     });
   };
 
-  const activeMetric = METRIC_OPTIONS.find((o) => o.key === metric) ?? METRIC_OPTIONS[0];
+  const activeMetric = TREND_METRIC_OPTIONS.find((o) => o.key === metric) ?? TREND_METRIC_OPTIONS[0];
 
   return (
     <article className="paper-panel paper-noise fade-up rounded-3xl p-5 md:p-7">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-2xl text-[color:var(--card-foreground)]">Historical Trends</h2>
         <div className="inline-flex items-center rounded-xl border border-[color:var(--border)] bg-[color:var(--paper)]/72 p-1 shadow-[0_10px_16px_-14px_rgba(20,25,28,0.5)]">
-          {WINDOW_OPTIONS.map((option) => {
+          {TREND_WINDOW_OPTIONS.map((option) => {
             const selected = option.value === hours;
             return (
               <button
@@ -264,7 +301,7 @@ export function OverviewTrend({
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {METRIC_OPTIONS.map((option) => {
+        {TREND_METRIC_OPTIONS.map((option) => {
           const selected = option.key === metric;
           return (
             <button

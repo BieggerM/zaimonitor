@@ -18,6 +18,31 @@ export const MODEL_COLORS: Record<ModelKey, string> = {
   "glm-4.7-flash": "var(--chart-3)",
 };
 
+export type TrendMetricKey = "output_tps" | "ttft_ms";
+
+export const TREND_METRIC_OPTIONS: ReadonlyArray<{ key: TrendMetricKey; label: string }> = [
+  { key: "output_tps", label: "Tokens/sec" },
+  { key: "ttft_ms", label: "Time to First Token" },
+];
+
+export const TREND_WINDOW_OPTIONS = [
+  { value: "24", label: "24h" },
+  { value: "168", label: "7d" },
+] as const;
+
+export const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+export const SEVEN_DAY_SMOOTHING_RADIUS = 2;
+
+export type TrendSeriesKey = "glm47" | "glm47flash" | "glm5";
+
+export const TREND_SERIES_KEYS: readonly TrendSeriesKey[] = ["glm47", "glm47flash", "glm5"] as const;
+
+export const TREND_SERIES_BY_MODEL: Record<ModelKey, TrendSeriesKey> = {
+  "glm-5": "glm5",
+  "glm-4.7": "glm47",
+  "glm-4.7-flash": "glm47flash",
+};
+
 // Performance degradation thresholds
 export const DEGRADATION_THRESHOLDS = {
   tps: {
