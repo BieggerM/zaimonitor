@@ -1,6 +1,6 @@
-# name: ZAI Inference Monitor (Coding Plan)
+name: ZAI Inference Monitor (Coding Plan)
 
-# on:
+on:
   # push:
   #   branches:
   #     - main
