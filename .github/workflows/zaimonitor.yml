@@ -1,11 +1,11 @@
 name: ZAI Inference Monitor (Coding Plan)
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - script/**
+  push:
+      branches:
+        - rebirth
+      paths:
+        - script/**
 
   # schedule:
     # - cron: "*/40 * * * *"   # every 40 minutes (UTC)
