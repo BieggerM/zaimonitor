@@ -12,7 +12,7 @@ Defaults:
   "run_id": "UUID",
   "endpoint_family": "coding_plan",
   "endpoint_base": "https://api.z.ai/api/coding/paas/v4",
-  "model": "glm-5 | glm-4.7 | glm-4.7-flash",
+  "model": "glm-5.2 | glm-5.1 | glm-5",
   "ok": true,
   "metrics": {
     "first_answer_token_ms": 1200.5,

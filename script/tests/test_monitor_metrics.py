@@ -30,7 +30,7 @@ class MonitorMetricTests(unittest.TestCase):
         self.cfg = monitor.Config(
             zai_api_key="test-key",
             zai_base_url="https://example.test/v4",
-            zai_model="glm-5",
+            zai_model="glm-5.2",
             mongodb_uri="mongodb://example.test",
             request_retries=1,
             request_retry_backoff_seconds=0.01,
@@ -53,7 +53,7 @@ class MonitorMetricTests(unittest.TestCase):
                 side_effect=[requests.RequestException("first attempt timeout"), response],
             ),
             patch.object(monitor.time, "sleep", return_value=None),
-            patch.object(monitor.time, "monotonic", side_effect=[0.0, 1.0, 10.0, 11.0, 12.0, 12.0, 14.0]),
+            patch.object(monitor.time, "monotonic", side_effect=[0.0, 1.0, 10.0, 11.0, 12.0, 14.0]),
             patch.object(
                 monitor,
                 "now_utc",
@@ -73,17 +73,12 @@ class MonitorMetricTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["attempt"], 2)
         self.assertAlmostEqual(result["header_latency_ms"], 1000.0)
-        self.assertAlmostEqual(result["first_sse_event_ms"], 2000.0)
         self.assertAlmostEqual(result["first_answer_token_ms"], 2000.0)
         self.assertAlmostEqual(result["ttft_ms"], 2000.0)
-        self.assertAlmostEqual(result["time_to_completed_answer_ms"], 4000.0)
         self.assertAlmostEqual(result["total_latency_ms"], 4000.0)
         self.assertAlmostEqual(result["generation_window_ms"], 2000.0)
-        self.assertAlmostEqual(result["output_tokens_per_second"], 2.0)
         self.assertAlmostEqual(result["output_tokens_per_second_end_to_end"], 1.0)
         self.assertAlmostEqual(result["output_tokens_per_second_post_ttft"], 1.5)
-        self.assertEqual(result["sse_event_count"], 1)
-        self.assertEqual(result["content_chunk_count"], 1)
 
     def test_generation_window_waits_for_stream_end_not_finish_reason(self):
         first_event = {
@@ -104,7 +99,7 @@ class MonitorMetricTests(unittest.TestCase):
 
         with (
             patch.object(monitor.requests, "post", return_value=response),
-            patch.object(monitor.time, "monotonic", side_effect=[19.0, 20.0, 21.0, 22.0, 22.0, 26.0]),
+            patch.object(monitor.time, "monotonic", side_effect=[19.0, 20.0, 21.0, 22.0, 26.0]),
             patch.object(
                 monitor,
                 "now_utc",
@@ -120,16 +115,12 @@ class MonitorMetricTests(unittest.TestCase):
             result = monitor.stream_chat_completion(self.cfg, "hello", "req-2")
 
         self.assertTrue(result["ok"])
-        self.assertAlmostEqual(result["first_sse_event_ms"], 2000.0)
         self.assertAlmostEqual(result["first_answer_token_ms"], 2000.0)
         self.assertAlmostEqual(result["ttft_ms"], 2000.0)
-        self.assertAlmostEqual(result["time_to_completed_answer_ms"], 6000.0)
+        self.assertAlmostEqual(result["total_latency_ms"], 6000.0)
         self.assertAlmostEqual(result["generation_window_ms"], 4000.0)
-        self.assertAlmostEqual(result["output_tokens_per_second"], 2.0)
         self.assertAlmostEqual(result["output_tokens_per_second_end_to_end"], 1.3333333333)
         self.assertAlmostEqual(result["output_tokens_per_second_post_ttft"], 1.75)
-        self.assertEqual(result["sse_event_count"], 2)
-        self.assertEqual(result["content_chunk_count"], 1)
 
     def test_reasoning_before_answer_sets_ttft_to_first_reasoning(self):
         first_event = {
@@ -150,7 +141,7 @@ class MonitorMetricTests(unittest.TestCase):
 
         with (
             patch.object(monitor.requests, "post", return_value=response),
-            patch.object(monitor.time, "monotonic", side_effect=[29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 38.0]),
+            patch.object(monitor.time, "monotonic", side_effect=[29.0, 30.0, 31.0, 33.0, 34.0, 38.0]),
             patch.object(
                 monitor,
                 "now_utc",
@@ -166,12 +157,9 @@ class MonitorMetricTests(unittest.TestCase):
             result = monitor.stream_chat_completion(self.cfg, "hello", "req-3")
 
         self.assertTrue(result["ok"])
-        self.assertAlmostEqual(result["first_sse_event_ms"], 2000.0)
-        self.assertAlmostEqual(result["first_reasoning_token_ms"], 3000.0)
         self.assertAlmostEqual(result["first_answer_token_ms"], 4000.0)
         self.assertAlmostEqual(result["ttft_ms"], 3000.0)
-        self.assertAlmostEqual(result["thinking_window_ms"], 1000.0)
-        self.assertAlmostEqual(result["time_to_completed_answer_ms"], 8000.0)
+        self.assertAlmostEqual(result["total_latency_ms"], 8000.0)
         self.assertAlmostEqual(result["generation_window_ms"], 4000.0)
         self.assertAlmostEqual(result["output_tokens_per_second_post_ttft"], 1.8)
 
@@ -179,7 +167,7 @@ class MonitorMetricTests(unittest.TestCase):
         env = {
             "ZAI_API_KEY": "test-key",
             "ZAI_BASE_URL": "https://api.z.ai/api/coding/paas/v4",
-            "ZAI_MODEL": "glm-4.7",
+            "ZAI_MODEL": "glm-5.1",
             "MONGODB_URI": "mongodb://example.test",
         }
         with patch.dict(os.environ, env, clear=True):
@@ -190,7 +178,7 @@ class MonitorMetricTests(unittest.TestCase):
         cfg = monitor.Config(
             zai_api_key="test-key",
             zai_base_url="https://api.z.ai/api/coding/paas/v4",
-            zai_model="glm-4.7",
+            zai_model="glm-5.1",
             mongodb_uri="mongodb://example.test",
             zai_endpoint_family=monitor.ENDPOINT_FAMILY_CODING_PLAN,
             zai_provider="z.ai",

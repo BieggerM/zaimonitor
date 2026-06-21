@@ -6,7 +6,7 @@ import "./globals.css";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://zaimonitor.vercel.app";
 const SITE_TITLE = "ZAI Monitor – AI Inference Latency & Throughput Dashboard";
 const SITE_DESCRIPTION =
-  "Real-time monitoring of Z.AI model inference performance. Track TTFT, token throughput, and reliability trends for GLM-5, GLM-4.7, and GLM-4.7-Flash.";
+  "Real-time monitoring of Z.AI model inference performance. Track TTFT, token throughput, and reliability trends for GLM-5.2, GLM-5.1, and GLM-5.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -22,8 +22,9 @@ export const metadata: Metadata = {
     "LLM benchmark",
     "TTFT",
     "token throughput",
+    "GLM-5.2",
+    "GLM-5.1",
     "GLM-5",
-    "GLM-4.7",
     "latency dashboard",
     "AI performance monitoring",
   ],

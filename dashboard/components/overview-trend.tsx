@@ -141,8 +141,8 @@ export function OverviewTrend({
     const end = parseIso(windowEnd);
 
     const emptyStats: Record<SeriesKey, { min: number | null; max: number | null; avg: number | null }> = {
-      glm47: { min: null, max: null, avg: null },
-      glm47flash: { min: null, max: null, avg: null },
+      glm52: { min: null, max: null, avg: null },
+      glm51: { min: null, max: null, avg: null },
       glm5: { min: null, max: null, avg: null },
     };
     if (!start || !end || end <= start) {
@@ -186,8 +186,8 @@ export function OverviewTrend({
 
     const config: ChartConfig = {};
     const stats: Record<SeriesKey, { min: number | null; max: number | null; avg: number | null }> = {
-      glm47: { min: null, max: null, avg: null },
-      glm47flash: { min: null, max: null, avg: null },
+      glm52: { min: null, max: null, avg: null },
+      glm51: { min: null, max: null, avg: null },
       glm5: { min: null, max: null, avg: null },
     };
     const rawRowsByTimestamp = new Map<string, ChartDataPoint>();
@@ -418,22 +418,22 @@ export function OverviewTrend({
                     />
                   }
                 />
-                {activeSeries.has("glm47") && (
+                {activeSeries.has("glm52") && (
                   <Line
-                    dataKey="glm47"
+                    dataKey="glm52"
                     type="monotone"
-                    stroke="var(--color-glm47)"
+                    stroke="var(--color-glm52)"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 5 }}
                     connectNulls
                   />
                 )}
-                {activeSeries.has("glm47flash") && (
+                {activeSeries.has("glm51") && (
                   <Line
-                    dataKey="glm47flash"
+                    dataKey="glm51"
                     type="monotone"
-                    stroke="var(--color-glm47flash)"
+                    stroke="var(--color-glm51)"
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 5 }}

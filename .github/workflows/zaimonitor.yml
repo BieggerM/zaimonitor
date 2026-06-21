@@ -39,11 +39,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run monitor (coding_plan endpoint, both models)
+      - name: Run monitor (coding_plan endpoint, GLM-5 family)
         run: |
           set +e
           failures=0
-          for model in glm-5 glm-4.7 glm-4.7-flash; do
+          for model in glm-5.2 glm-5.1 glm-5; do
             echo "::group::coding_plan / ${model}"
             ZAI_BASE_URL="https://api.z.ai/api/coding/paas/v4" \
             ZAI_MODEL="${model}" \

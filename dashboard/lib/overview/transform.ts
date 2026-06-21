@@ -4,15 +4,9 @@ import { extractOutputTpsPostTtft } from "./metrics";
 export function normalizeModel(model: string | undefined): string {
   if (!model || typeof model !== "string") return "unknown";
   const trimmed = model.trim().toLowerCase();
-  if (
-    trimmed.includes("glm-4.7-flash")
-    || trimmed.includes("glm47-flash")
-    || trimmed.includes("glm47flash")
-  ) {
-    return "glm-4.7-flash";
-  }
+  if (trimmed.includes("glm-5.2") || trimmed.includes("glm52")) return "glm-5.2";
+  if (trimmed.includes("glm-5.1") || trimmed.includes("glm51")) return "glm-5.1";
   if (trimmed.includes("glm-5") || trimmed === "glm5") return "glm-5";
-  if (trimmed.includes("glm-4.7") || trimmed.includes("glm47")) return "glm-4.7";
   return trimmed || "unknown";
 }
 

@@ -34,11 +34,13 @@ Dashboard env:
 - optional: `MONGO_DB` (`zaimonitor`)
 - optional: `MONGO_COLLECTION` (`inference_runs`)
 
-## Production Cadence
-GitHub Actions workflow (`.github/workflows/zaimonitor.yml`) runs every 40 minutes and collects:
+## Monitored Models
+The manual GitHub Actions workflow (`.github/workflows/zaimonitor.yml`) collects:
+- `glm-5.2`
+- `glm-5.1`
 - `glm-5`
-- `glm-4.7`
-- `glm-4.7-flash`
+
+Recurring collection is disabled while the updated model identifiers are being validated.
 
 ## Metric Notes
 Primary metrics:
